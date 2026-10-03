@@ -19,8 +19,7 @@ final class RaceArena {
 	private static final int OUTER_Z = 60;
 	private static final int INNER_X = 68;
 	private static final int INNER_Z = 48;
-	private static final BlockState ASPHALT = Blocks.CONCRETE.black().defaultBlockState();
-	private static final BlockState BORDER = Blocks.CONCRETE.white().defaultBlockState();
+	private static final BlockState TRACK = Blocks.BLUE_ICE.defaultBlockState();
 	private static final BlockState[] CROWD_COLORS = {
 			Blocks.WOOL.red().defaultBlockState(),
 			Blocks.WOOL.orange().defaultBlockState(),
@@ -34,23 +33,59 @@ final class RaceArena {
 	}
 
 	static void build(ServerLevel level, BlockPos marker) {
+		boolean existingArena = level.getBlockState(marker).is(Blocks.OBSIDIAN);
 		int roadY = RaceDimension.GROUND_Y - 1;
 		for (int x = -OUTER_X; x <= OUTER_X; x++) {
 			for (int z = -OUTER_Z; z <= OUTER_Z; z++) {
 				double outer = square((double) x / OUTER_X) + square((double) z / OUTER_Z);
 				double inner = square((double) x / INNER_X) + square((double) z / INNER_Z);
 				if (outer <= 1.0 && inner >= 1.0) {
-					boolean edge = outer > 0.96 || inner < 1.05;
-					level.setBlock(new BlockPos(x, roadY, z), edge ? BORDER : ASPHALT, Block.UPDATE_CLIENTS);
+					level.setBlock(new BlockPos(x, roadY, z), TRACK, Block.UPDATE_CLIENTS);
 				}
 			}
 		}
 
+		buildCornerFences(level, roadY);
 		buildGate(level, 0, -55, true);
 		buildGate(level, 0, 55, false);
-		buildGrandstands(level);
+		if (!existingArena) {
+			buildGrandstands(level);
+		}
 		buildLights(level);
-		level.setBlock(marker, Blocks.OBSIDIAN.defaultBlockState(), Block.UPDATE_CLIENTS);
+		level.setBlock(marker, Blocks.BLUE_ICE.defaultBlockState(), Block.UPDATE_CLIENTS);
+	}
+
+	private static void buildCornerFences(ServerLevel level, int roadY) {
+		buildFenceArc(level, roadY, 20, 160);
+		buildFenceArc(level, roadY, 200, 340);
+	}
+
+	private static void buildFenceArc(ServerLevel level, int roadY, int startDegrees, int endDegrees) {
+		int previousX = Integer.MIN_VALUE;
+		int previousZ = Integer.MIN_VALUE;
+		for (int degrees = startDegrees; degrees <= endDegrees; degrees++) {
+			double angle = Math.toRadians(degrees);
+			int x = (int) Math.round((OUTER_X + 2) * Math.cos(angle));
+			int z = (int) Math.round((OUTER_Z + 2) * Math.sin(angle));
+			if (previousX != Integer.MIN_VALUE) {
+				int steps = Math.max(Math.abs(x - previousX), Math.abs(z - previousZ));
+				for (int step = 1; step <= steps; step++) {
+					int fenceX = previousX + (x - previousX) * step / steps;
+					int fenceZ = previousZ + (z - previousZ) * step / steps;
+					placeFence(level, roadY, fenceX, fenceZ);
+				}
+			} else {
+				placeFence(level, roadY, x, z);
+			}
+			previousX = x;
+			previousZ = z;
+		}
+	}
+
+	private static void placeFence(ServerLevel level, int roadY, int x, int z) {
+		BlockState fence = Blocks.OAK_FENCE.defaultBlockState();
+		level.setBlock(new BlockPos(x, roadY + 1, z), fence, Block.UPDATE_ALL);
+		level.setBlock(new BlockPos(x, roadY + 2, z), fence, Block.UPDATE_ALL);
 	}
 
 	private static void buildGate(ServerLevel level, int centerX, int centerZ, boolean start) {

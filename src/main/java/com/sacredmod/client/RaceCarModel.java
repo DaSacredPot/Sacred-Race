@@ -66,11 +66,6 @@ public class RaceCarModel extends EntityModel<RaceCarRenderState> {
 		box(root, "steering_column", 160, 192, -5, -3, -8, 1, 2, 4, chassis);
 		steeringWheel(root);
 
-		PartPose windshieldPose = PartPose.offsetAndRotation(0, 16, 0, (float) -Math.PI / 8, 0, 0);
-		box(root, "windscreen_left_frame", 192, 64, -9, -10, -11, 2, 7, 2, windshieldPose);
-		box(root, "windscreen_right_frame", 192, 64, 7, -10, -11, 2, 7, 2, windshieldPose);
-		box(root, "windscreen_top_frame", 192, 80, -8, -11, -11, 16, 2, 2, windshieldPose);
-		box(root, "windscreen_bottom_frame", 192, 80, -8, -5, -11, 16, 2, 2, windshieldPose);
 		box(root, "left_rollbar", 192, 64, -10, -10, -5, 2, 11, 2, chassis);
 		box(root, "right_rollbar", 192, 64, 8, -10, -5, 2, 11, 2, chassis);
 		box(root, "rollbar_top_front", 192, 80, -10, -10, -5, 20, 2, 2, chassis);
@@ -93,15 +88,6 @@ public class RaceCarModel extends EntityModel<RaceCarRenderState> {
 		wheel(root, "wheel_fr", 13, -10);
 		wheel(root, "wheel_bl", -13, 10);
 		wheel(root, "wheel_br", 13, 10);
-		return LayerDefinition.create(mesh, 256, 256);
-	}
-
-	public static LayerDefinition createWindshieldLayer() {
-		MeshDefinition mesh = new MeshDefinition();
-		PartPose pose = PartPose.offsetAndRotation(0, 16, 0, (float) -Math.PI / 8, 0, 0);
-		mesh.getRoot().addOrReplaceChild("windshield",
-				CubeListBuilder.create().texOffs(128, 0).addBox(-8, -9, -11, 16, 5, 1),
-				pose);
 		return LayerDefinition.create(mesh, 256, 256);
 	}
 

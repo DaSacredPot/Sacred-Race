@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
   "game": "minecraft",
-  "versionId": "1.0.8",
+  "versionId": "1.0.9",
   "name": "Sacred Race Performance Pack",
-  "summary": "Cars with a translucent windshield, vanilla driving, and drift effects.",
+  "summary": "Blue-ice speedway with corner fences and open-convertible cars.",
   "files": [
     {
       "path": "mods/fabric-api-0.161.0+26.3.jar",
