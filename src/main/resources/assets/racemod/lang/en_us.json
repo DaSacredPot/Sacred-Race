@@ -1,0 +1,18 @@
+{
+	"item.racemod.veldora_car": "Veldora Sprint-9",
+	"item.racemod.nimbus_car": "Nimbus Coil Arc Runner",
+	"item.racemod.apexlyn_car": "Apexlyn Crownline",
+	"item.racemod.driftora_car": "Driftora Sidewinder",
+	"item.racemod.zephara_car": "Zephara Gale GT",
+	"item.racemod.korvex_car": "Korvex Bounty Hauler",
+	"item.racemod.bercedes_menz_car": "Bercedes Menz Silver Arrow",
+	"item.racemod.borche_car": "Borche Vortex GT",
+	"item.racemod.pmv_car": "PMV M-3R",
+	"block.racemod.speed_limit": "Speed Limit Sign",
+	"block.racemod.speed_radar": "Speed Radar",
+	"block.racemod.race_start": "Race Start",
+	"block.racemod.race_checkpoint": "Race Checkpoint",
+	"block.racemod.race_finish": "Race Finish",
+	"itemGroup.racemod.race": "Race Mod",
+	"entity.racemod.race_car": "Race Car"
+}

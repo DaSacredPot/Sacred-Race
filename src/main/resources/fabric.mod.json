@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "racemod",
+	"version": "${version}",
+	"name": "Race Mod",
+	"description": "Fictional and parody-brand cars, street races, speed radars, bounty, and diamond upgrades.",
+	"authors": [
+		"SacredMod"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/racemod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.sacredmod.RaceMod"
+		],
+		"client": [
+			"com.sacredmod.client.RaceModClient"
+		]
+	},
+	"mixins": [
+		"racemod.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"sodium": "*",
+		"sodium-extra": "*"
+	}
+}
