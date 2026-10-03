@@ -9,4 +9,5 @@ public class RaceCarRenderState extends EntityRenderState {
 	public float wheelRotation;
 	public float steering;
 	public float drift;
+	public boolean hideExteriorForDriver;
 }

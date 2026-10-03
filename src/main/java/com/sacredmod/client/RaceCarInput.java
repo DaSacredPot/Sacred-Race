@@ -24,7 +24,7 @@ public final class RaceCarInput {
 		boolean backward = minecraft.options.keyDown.isDown() && car.getFuelPercent() > 0;
 		boolean left = minecraft.options.keyLeft.isDown();
 		boolean right = minecraft.options.keyRight.isDown();
-		car.setInput(right, left, forward, backward);
+		car.setInput(left, right, forward, backward);
 		ClientPlayNetworking.send(new RaceDriveInput(
 				forward,
 				backward,

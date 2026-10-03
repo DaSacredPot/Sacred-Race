@@ -5,6 +5,7 @@ import org.joml.Matrix4f;
 import com.sacredmod.RaceMod;
 import com.sacredmod.car.CarBrand;
 import com.sacredmod.car.RaceCarEntity;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -37,10 +38,18 @@ public class RaceCarRenderer extends EntityRenderer<RaceCarEntity, RaceCarRender
 		state.wheelRotation = (float) (entity.tickCount * entity.getDeltaMovement().horizontalDistance() * 3);
 		state.steering = entity.getSteeringAngle();
 		state.drift = entity.getDriftAngle();
+		Minecraft minecraft = Minecraft.getInstance();
+		state.hideExteriorForDriver = minecraft.player != null
+				&& minecraft.player.getVehicle() == entity
+				&& minecraft.options.getCameraType().isFirstPerson();
 	}
 
 	@Override
 	public void submit(RaceCarRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
+		if (state.hideExteriorForDriver) {
+			super.submit(state, poseStack, collector, camera);
+			return;
+		}
 		poseStack.pushPose();
 		poseStack.translate(0.0f, 2.1f, 0.0f);
 		poseStack.mulPose(new Matrix4f().rotationY((float) Math.toRadians(180.0f - state.yRot)));

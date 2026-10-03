@@ -161,7 +161,7 @@ public class RaceCarEntity extends Boat {
 		this.inputLeft = input.left() && !input.right();
 		this.inputRight = input.right() && !input.left();
 		this.lastInputTick = this.tickCount;
-		setInput(this.inputRight, this.inputLeft, this.inputForward, this.inputBackward);
+		setInput(this.inputLeft, this.inputRight, this.inputForward, this.inputBackward);
 	}
 
 	public static int upgradeCost(int currentLevel) {
@@ -333,7 +333,7 @@ public class RaceCarEntity extends Boat {
 		boolean left = inputFresh && this.inputLeft;
 		boolean right = inputFresh && this.inputRight;
 		if (!hasFuel && (this.inputForward || this.inputBackward)) {
-			setInput(right, left, false, false);
+			setInput(left, right, false, false);
 		}
 		float throttle = forward ? 1.0f : backward ? -1.0f : 0.0f;
 		this.entityData.set(DATA_THROTTLE, throttle);
