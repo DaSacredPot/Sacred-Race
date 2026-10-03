@@ -35,6 +35,10 @@ public final class RaceCommands {
 					}
 					return 1;
 				}))
+				.then(Commands.literal("restart").executes(context -> {
+					RaceManager.restartArenaRace(context.getSource().getPlayerOrException());
+					return 1;
+				}))
 				.then(Commands.literal("return").executes(context -> {
 					RaceDimension.returnToOverworld(context.getSource().getPlayerOrException());
 					return 1;

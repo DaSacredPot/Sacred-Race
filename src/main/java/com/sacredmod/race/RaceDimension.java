@@ -79,6 +79,8 @@ public final class RaceDimension {
 			RaceMod.LOGGER.error("Failed to teleport player {} to race dimension.", player.getScoreboardName());
 			return;
 		}
+		player.setAttached(ModAttachments.RACE_STATS,
+				player.getAttachedOrCreate(ModAttachments.RACE_STATS).cancelRace());
 
 		RaceCarEntity car = findParkedCar(raceWorld, x, z);
 		if (car == null) {
@@ -98,8 +100,8 @@ public final class RaceDimension {
 		if (!player.startRiding(car)) {
 			RaceMessages.send(player, Component.literal("Your car is ready nearby; right-click it to drive."), false);
 		}
-		RaceManager.startArenaRace(player);
-		RaceMessages.send(player, Component.literal("Welcome to Sacred Speedway! Use /race return to visit the Overworld."), false);
+		RaceMessages.send(player, Component.literal("Welcome to Sacred Speedway! Use /race start when you're ready, "
+				+ "/race restart to restart an active race, or /race return to visit the Overworld."), false);
 	}
 
 	private static int findOpenGridSlot(ServerLevel level, ServerPlayer joiningPlayer) {

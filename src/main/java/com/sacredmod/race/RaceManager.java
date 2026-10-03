@@ -46,17 +46,35 @@ public final class RaceManager {
 	}
 
 	public static void startArenaRace(ServerPlayer player) {
+		beginArenaRace(player, false);
+	}
+
+	public static void restartArenaRace(ServerPlayer player) {
+		beginArenaRace(player, true);
+	}
+
+	private static void beginArenaRace(ServerPlayer player, boolean restarting) {
 		if (!(player.level() instanceof ServerLevel level) || !RaceDimension.isRaceDimension(level)) {
 			RaceMessages.send(player, Component.literal("Race laps are only available in the race dimension."), true);
+			return;
+		}
+		RaceStats current = player.getAttachedOrCreate(ModAttachments.RACE_STATS);
+		if (restarting && !current.racing()) {
+			RaceMessages.send(player, Component.literal("There is no active race to restart. Use /race start."), true);
+			return;
+		}
+		if (!restarting && current.racing()) {
+			RaceMessages.send(player, Component.literal("A race is already in progress. Use /race restart to start it over."), true);
 			return;
 		}
 		if (!(player.getVehicle() instanceof RaceCarEntity)) {
 			RaceMessages.send(player, Component.literal("Hop in a car before starting a race."), true);
 			return;
 		}
-		RaceStats stats = player.getAttachedOrCreate(ModAttachments.RACE_STATS).startRace(1, RaceDimension.LAP_COUNT);
+		RaceStats stats = current.startRace(1, RaceDimension.LAP_COUNT);
 		player.setAttached(ModAttachments.RACE_STATS, stats);
-		RaceMessages.send(player, Component.literal("Race started! Complete " + RaceDimension.LAP_COUNT + " laps."), false);
+		String message = restarting ? "Race restarted! Complete " : "Race started! Complete ";
+		RaceMessages.send(player, Component.literal(message + RaceDimension.LAP_COUNT + " laps."), false);
 		level.playSound(null, player.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 1.0f, 1.2f);
 	}
 
