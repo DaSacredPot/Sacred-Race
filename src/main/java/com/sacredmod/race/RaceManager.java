@@ -59,8 +59,8 @@ public final class RaceManager {
 			return;
 		}
 		RaceStats current = player.getAttachedOrCreate(ModAttachments.RACE_STATS);
-		if (restarting && !current.racing()) {
-			RaceMessages.send(player, Component.literal("There is no active race to restart. Use /race start."), true);
+		if (restarting && !current.racing() && current.lapTarget() != RaceDimension.LAP_COUNT) {
+			RaceMessages.send(player, Component.literal("There is no race to restart. Use /race start."), true);
 			return;
 		}
 		if (!restarting && current.racing()) {

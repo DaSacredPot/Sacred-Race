@@ -16,9 +16,9 @@ public final class ModEntityTypes {
 	public static final EntityType<RaceCarEntity> RACE_CAR = register(
 			RACE_CAR_KEY,
 			EntityType.Builder.<RaceCarEntity>of(RaceCarEntity::new, MobCategory.MISC)
-					.sized(1.8f, 1.25f)
-					.eyeHeight(0.75f)
-					.passengerAttachments(new Vec3(-0.2, 0.55, 0.12), new Vec3(0.2, 0.55, 0.12))
+					.sized(2.7f, 1.8f)
+					.eyeHeight(1.0f)
+					.passengerAttachments(new Vec3(-0.36, 0.7, -0.25), new Vec3(0.36, 0.7, -0.25))
 					.clientTrackingRange(10)
 	);
 

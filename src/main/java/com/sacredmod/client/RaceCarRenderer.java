@@ -41,9 +41,9 @@ public class RaceCarRenderer extends EntityRenderer<RaceCarEntity, RaceCarRender
 	@Override
 	public void submit(RaceCarRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
 		poseStack.pushPose();
-		poseStack.translate(0.0f, 1.5f, 0.0f);
+		poseStack.translate(0.0f, 2.1f, 0.0f);
 		poseStack.mulPose(new Matrix4f().rotationY((float) Math.toRadians(180.0f - state.yRot)));
-		poseStack.scale(-1.0f, -1.0f, 1.0f);
+		poseStack.scale(-1.3f, -1.3f, 1.3f);
 		this.model.setupAnim(state);
 		Identifier texture = textureFor(state.brandId);
 		collector.submitModel(this.model, state, poseStack, texture, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);

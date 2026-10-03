@@ -2,6 +2,7 @@ package com.sacredmod.car;
 
 import com.sacredmod.race.ModAttachments;
 import com.sacredmod.race.RaceStats;
+import com.sacredmod.network.RaceDriveInput;
 import com.sacredmod.util.RaceMessages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -48,6 +49,11 @@ public class RaceCarEntity extends VehicleEntity {
 
 	private float speedBlocksPerTick;
 	private float steeringAngle;
+	private boolean inputForward;
+	private boolean inputBackward;
+	private boolean inputLeft;
+	private boolean inputRight;
+	private int lastInputTick;
 
 	public RaceCarEntity(EntityType<? extends RaceCarEntity> type, Level level) {
 		super(type, level);
@@ -125,18 +131,29 @@ public class RaceCarEntity extends VehicleEntity {
 		return Math.round(this.entityData.get(DATA_THROTTLE) * 100.0f);
 	}
 
+	public void acceptDriverInput(ServerPlayer driver, RaceDriveInput input) {
+		if (this.getControllingPassenger() != driver) {
+			return;
+		}
+		this.inputForward = input.forward() && !input.backward();
+		this.inputBackward = input.backward() && !input.forward();
+		this.inputLeft = input.left() && !input.right();
+		this.inputRight = input.right() && !input.left();
+		this.lastInputTick = this.tickCount;
+	}
+
 	public static int upgradeCost(int currentLevel) {
 		return currentLevel >= MAX_LEVEL ? 0 : Math.max(1, currentLevel) * 5;
 	}
 
 	public float maxSpeedBlocksPerTick() {
-		float base = 0.45f + (getPartLevel(CarPart.ENGINE) - 1) * 0.11f;
+		float base = 0.85f + (getPartLevel(CarPart.ENGINE) - 1) * 0.16f;
 		float wheelBonus = 1.0f + (getPartLevel(CarPart.WHEELS) - 1) * 0.025f;
 		return base * wheelBonus * getBrand().topSpeedMul();
 	}
 
 	public float acceleration() {
-		float engine = 0.055f + (getPartLevel(CarPart.ENGINE) - 1) * 0.012f;
+		float engine = 0.075f + (getPartLevel(CarPart.ENGINE) - 1) * 0.016f;
 		float wheels = 1.0f + (getPartLevel(CarPart.WHEELS) - 1) * 0.015f;
 		return engine * wheels * getBrand().accelMul();
 	}
@@ -304,25 +321,23 @@ public class RaceCarEntity extends VehicleEntity {
 		}
 
 		LivingEntity controller = this.getControllingPassenger();
-		boolean forward = false;
-		boolean backward = false;
-		boolean left = false;
-		boolean right = false;
-
-		if (controller instanceof ServerPlayer player) {
-			var input = player.getLastClientInput();
-			forward = input.forward();
-			backward = input.backward();
-			left = input.left();
-			right = input.right();
-			this.setYRot(player.getYRot());
+		boolean inputFresh = this.tickCount - this.lastInputTick <= 10;
+		boolean forward = inputFresh && this.inputForward;
+		boolean backward = inputFresh && this.inputBackward;
+		boolean left = inputFresh && this.inputLeft;
+		boolean right = inputFresh && this.inputRight;
+		if (!inputFresh) {
+			this.inputForward = false;
+			this.inputBackward = false;
+			this.inputLeft = false;
+			this.inputRight = false;
 		}
 
 		float max = maxSpeedBlocksPerTick();
 		float accel = acceleration();
-		boolean accelerating = forward || backward;
-		this.entityData.set(DATA_THROTTLE, accelerating ? 1.0f : 0.0f);
 		boolean hasFuel = this.entityData.get(DATA_FUEL) > 0.0f;
+		float throttle = !hasFuel ? 0.0f : forward ? 1.0f : backward ? -1.0f : 0.0f;
+		this.entityData.set(DATA_THROTTLE, throttle);
 		float targetSteering = left ? 0.45f : right ? -0.45f : 0.0f;
 		this.steeringAngle = Mth.lerp(0.35f, this.steeringAngle, targetSteering);
 		this.entityData.set(DATA_STEERING, this.steeringAngle);
@@ -333,7 +348,7 @@ public class RaceCarEntity extends VehicleEntity {
 		} else {
 			this.speedBlocksPerTick *= 0.985f;
 		}
-		if (accelerating && hasFuel) {
+		if (throttle != 0.0f) {
 			this.entityData.set(DATA_FUEL, Math.max(0.0f, this.entityData.get(DATA_FUEL) - 0.02f));
 		}
 
@@ -344,10 +359,6 @@ public class RaceCarEntity extends VehicleEntity {
 			}
 			if (right) {
 				this.setYRot(this.getYRot() + turn);
-			}
-			if (controller != null) {
-				controller.setYRot(this.getYRot());
-				controller.setYBodyRot(this.getYRot());
 			}
 		}
 

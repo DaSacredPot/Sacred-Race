@@ -6,8 +6,8 @@ import com.sacredmod.car.ModEntityTypes;
 import com.sacredmod.command.RaceCommands;
 import com.sacredmod.item.ModItems;
 import com.sacredmod.race.ModAttachments;
-import com.sacredmod.race.RaceDimension;
 import com.sacredmod.race.RaceManager;
+import com.sacredmod.network.RaceNetworking;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -24,10 +24,10 @@ public class RaceMod implements ModInitializer {
 		ModBlocks.initialize();
 		ModBlockEntities.initialize();
 		ModItems.initialize();
+		RaceNetworking.register();
 		RaceCommands.register();
 		RaceManager.register();
-		RaceDimension.register();
-		LOGGER.info("Race Mod ready — race dimension, multiplayer laps, and car upgrades loaded.");
+		LOGGER.info("Race Mod ready — multiplayer cars, manual races, and vehicle controls loaded.");
 	}
 
 	public static Identifier id(String path) {

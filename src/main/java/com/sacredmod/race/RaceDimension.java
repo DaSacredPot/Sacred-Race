@@ -5,7 +5,6 @@ import com.sacredmod.car.CarBrand;
 import com.sacredmod.car.ModEntityTypes;
 import com.sacredmod.car.RaceCarEntity;
 import com.sacredmod.util.RaceMessages;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -26,16 +25,12 @@ public final class RaceDimension {
 	private RaceDimension() {
 	}
 
-	public static void register() {
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-				server.execute(() -> joinRaceWorld(handler.player, server)));
-	}
-
 	public static boolean isRaceDimension(ServerLevel level) {
 		return level.dimension().equals(KEY);
 	}
 
 	public static void returnToOverworld(ServerPlayer player) {
+		player.stopRiding();
 		ServerLevel overworld = player.level().getServer().getLevel(Level.OVERWORLD);
 		if (overworld == null) {
 			RaceMessages.send(player, Component.literal("The server's Overworld is unavailable."), false);
@@ -48,6 +43,9 @@ public final class RaceDimension {
 		if (!player.teleportTo(overworld, position.getX() + 0.5, spawnY, position.getZ() + 0.5,
 				Set.of(), player.getYRot(), player.getXRot(), true)) {
 			RaceMessages.send(player, Component.literal("Could not teleport you to the Overworld."), false);
+		} else {
+			player.setAttached(ModAttachments.RACE_STATS,
+					player.getAttachedOrCreate(ModAttachments.RACE_STATS).cancelRace());
 		}
 	}
 
@@ -59,6 +57,7 @@ public final class RaceDimension {
 		if (player.isRemoved()) {
 			return;
 		}
+		player.stopRiding();
 		ServerLevel raceWorld = server.getLevel(KEY);
 		if (raceWorld == null) {
 			RaceMessages.send(player, Component.literal("The race dimension is unavailable. Check the mod is installed on the server."), false);

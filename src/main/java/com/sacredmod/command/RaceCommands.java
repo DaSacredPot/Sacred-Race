@@ -24,7 +24,7 @@ public final class RaceCommands {
 
 	public static void register() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(Commands.literal("race")
-				.executes(context -> status(context.getSource().getPlayerOrException()))
+				.executes(context -> goToRaceWorld(context.getSource().getPlayerOrException()))
 				.then(Commands.literal("status").executes(context -> status(context.getSource().getPlayerOrException())))
 				.then(Commands.literal("start").executes(context -> {
 					ServerPlayer player = context.getSource().getPlayerOrException();
@@ -75,6 +75,11 @@ public final class RaceCommands {
 											return kmh;
 										}))))
 		));
+	}
+
+	private static int goToRaceWorld(ServerPlayer player) {
+		RaceDimension.joinRaceWorld(player);
+		return 1;
 	}
 
 	private static int status(ServerPlayer player) {

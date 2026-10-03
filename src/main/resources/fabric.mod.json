@@ -3,7 +3,7 @@
 	"id": "racemod",
 	"version": "${version}",
 	"name": "Race Mod",
-	"description": "A multiplayer race dimension with an automatic circuit, fake spectators, lap HUD, fuel, textured cars, and diamond upgrades.",
+	"description": "A custom multiplayer racing world with server-driven WASD controls, open-cockpit cars, and a first-person speedometer.",
 	"authors": [
 		"SacredMod"
 	],

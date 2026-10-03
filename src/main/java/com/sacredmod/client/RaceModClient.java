@@ -9,6 +9,7 @@ public class RaceModClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ModEntityModelLayers.register();
 		EntityRenderers.register(ModEntityTypes.RACE_CAR, RaceCarRenderer::new);
+		RaceCarInput.register();
 		SpeedHud.register();
 	}
 }
