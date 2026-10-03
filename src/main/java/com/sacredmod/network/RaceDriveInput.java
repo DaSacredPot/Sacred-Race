@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 public record RaceDriveInput(boolean forward, boolean backward, boolean left, boolean right) implements CustomPacketPayload {
-	public static final Type<RaceDriveInput> TYPE = CustomPacketPayload.createType(RaceMod.MOD_ID + ":drive_input");
+	public static final Type<RaceDriveInput> TYPE = new Type<>(RaceMod.id("drive_input"));
 
 	public static final StreamCodec<RegistryFriendlyByteBuf, RaceDriveInput> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.BOOL, RaceDriveInput::forward,

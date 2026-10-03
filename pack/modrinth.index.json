@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
   "game": "minecraft",
-  "versionId": "1.0.4",
+  "versionId": "1.0.5",
   "name": "Sacred Race Performance Pack",
-  "summary": "Race in a custom cockpit with responsive WASD controls in Fabric 26.3.",
+  "summary": "Race with responsive WASD controls; fixes startup crash on Fabric 26.3.",
   "files": [
     {
       "path": "mods/fabric-api-0.161.0+26.3.jar",
