@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.sacredmod.car.CarBrand;
 import com.sacredmod.car.CarPart;
 import com.sacredmod.car.RaceCarEntity;
+import com.sacredmod.race.RaceDimension;
 import com.sacredmod.race.ModAttachments;
 import com.sacredmod.race.RaceManager;
 import com.sacredmod.race.RaceStats;
@@ -25,6 +26,23 @@ public final class RaceCommands {
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(Commands.literal("race")
 				.executes(context -> status(context.getSource().getPlayerOrException()))
 				.then(Commands.literal("status").executes(context -> status(context.getSource().getPlayerOrException())))
+				.then(Commands.literal("start").executes(context -> {
+					ServerPlayer player = context.getSource().getPlayerOrException();
+					if (player.level() instanceof net.minecraft.server.level.ServerLevel level && RaceDimension.isRaceDimension(level)) {
+						RaceManager.startArenaRace(player);
+					} else {
+						RaceManager.startRace(player, player.blockPosition());
+					}
+					return 1;
+				}))
+				.then(Commands.literal("return").executes(context -> {
+					RaceDimension.returnToOverworld(context.getSource().getPlayerOrException());
+					return 1;
+				}))
+				.then(Commands.literal("world").executes(context -> {
+					RaceDimension.joinRaceWorld(context.getSource().getPlayerOrException());
+					return 1;
+				}))
 				.then(Commands.literal("paybounty").executes(context -> {
 					int result = RaceManager.payBounty(context.getSource().getPlayerOrException());
 					return result < 0 ? 0 : 1;

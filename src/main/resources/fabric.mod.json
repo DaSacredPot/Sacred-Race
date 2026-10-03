@@ -3,7 +3,7 @@
 	"id": "racemod",
 	"version": "${version}",
 	"name": "Race Mod",
-	"description": "Textured sports cars with detailed cockpits, driveable handling, street races, speed radars, and diamond upgrades.",
+	"description": "A multiplayer race dimension with an automatic circuit, fake spectators, lap HUD, fuel, textured cars, and diamond upgrades.",
 	"authors": [
 		"SacredMod"
 	],

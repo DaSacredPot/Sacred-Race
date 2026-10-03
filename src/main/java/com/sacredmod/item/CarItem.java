@@ -24,6 +24,7 @@ public class CarItem extends Item {
 	private static final String WHEELS_LEVEL_KEY = "wheels_level";
 	private static final String HANDLING_LEVEL_KEY = "handling_level";
 	private static final String CHASSIS_LEVEL_KEY = "chassis_level";
+	private static final String FUEL_KEY = "fuel";
 	private final CarBrand brand;
 
 	public CarItem(CarBrand brand, Properties properties) {
@@ -73,6 +74,7 @@ public class CarItem extends Item {
 			tag.putInt(WHEELS_LEVEL_KEY, car.getPartLevel(CarPart.WHEELS));
 			tag.putInt(HANDLING_LEVEL_KEY, car.getPartLevel(CarPart.HANDLING));
 			tag.putInt(CHASSIS_LEVEL_KEY, car.getPartLevel(CarPart.CHASSIS));
+			tag.putInt(FUEL_KEY, car.getFuelPercent());
 		});
 	}
 
@@ -80,6 +82,8 @@ public class CarItem extends Item {
 		for (CarPart part : CarPart.values()) {
 			car.setPartLevel(part, getStoredPartLevel(stack, part));
 		}
+		CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+		car.setFuelPercent(Math.max(0, Math.min(100, tag.getIntOr(FUEL_KEY, 100))));
 	}
 
 	@Override

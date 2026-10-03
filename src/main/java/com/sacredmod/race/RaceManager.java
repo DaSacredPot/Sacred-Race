@@ -45,10 +45,31 @@ public final class RaceManager {
 		level.playSound(null, start, SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 1.0f, 1.2f);
 	}
 
+	public static void startArenaRace(ServerPlayer player) {
+		if (!(player.level() instanceof ServerLevel level) || !RaceDimension.isRaceDimension(level)) {
+			RaceMessages.send(player, Component.literal("Race laps are only available in the race dimension."), true);
+			return;
+		}
+		if (!(player.getVehicle() instanceof RaceCarEntity)) {
+			RaceMessages.send(player, Component.literal("Hop in a car before starting a race."), true);
+			return;
+		}
+		RaceStats stats = player.getAttachedOrCreate(ModAttachments.RACE_STATS).startRace(1, RaceDimension.LAP_COUNT);
+		player.setAttached(ModAttachments.RACE_STATS, stats);
+		RaceMessages.send(player, Component.literal("Race started! Complete " + RaceDimension.LAP_COUNT + " laps."), false);
+		level.playSound(null, player.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 1.0f, 1.2f);
+	}
+
 	private static void tickLevel(ServerLevel level) {
 		for (ServerPlayer player : level.players()) {
 			RaceStats stats = player.getAttachedOrCreate(ModAttachments.RACE_STATS);
 			if (!stats.racing() || !(player.getVehicle() instanceof RaceCarEntity car)) {
+				continue;
+			}
+			stats = stats.tickRace();
+			player.setAttached(ModAttachments.RACE_STATS, stats);
+			if (RaceDimension.isRaceDimension(level)) {
+				tickArenaRace(player, car, stats);
 				continue;
 			}
 			BlockPos pos = player.blockPosition();
@@ -61,6 +82,32 @@ public final class RaceManager {
 			}
 			if (state.is(ModBlocks.RACE_FINISH) && stats.checkpointsHit() >= stats.requiredCheckpoints()) {
 				finishRace(player, car, stats);
+			}
+		}
+	}
+
+	private static void tickArenaRace(ServerPlayer player, RaceCarEntity car, RaceStats stats) {
+		double x = car.getX();
+		double z = car.getZ();
+		boolean atCheckpoint = Math.abs(x) <= 2.0 && z >= 49.0 && z <= 61.0;
+		boolean atFinish = Math.abs(x) <= 2.0 && z >= -61.0 && z <= -49.0;
+		if (atCheckpoint && !stats.checkpointPassed()) {
+			RaceStats next = stats.hitCheckpoint();
+			player.setAttached(ModAttachments.RACE_STATS, next);
+			RaceMessages.send(player, Component.literal("Checkpoint reached! Cross the start line to complete lap "
+					+ Math.min(next.completedLaps() + 1, next.lapTarget()) + "."), true);
+			player.level().playSound(null, car.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP,
+					SoundSource.PLAYERS, 0.8f, 1.3f);
+		} else if (atFinish && stats.checkpointPassed()) {
+			RaceStats next = stats.completeLap();
+			if (next.completedLaps() >= next.lapTarget()) {
+				finishRace(player, car, next);
+			} else {
+				player.setAttached(ModAttachments.RACE_STATS, next);
+				RaceMessages.send(player, Component.literal("Lap " + next.completedLaps() + "/" + next.lapTarget()
+						+ " complete!"), true);
+				player.level().playSound(null, car.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(),
+						SoundSource.PLAYERS, 0.8f, 1.5f);
 			}
 		}
 	}

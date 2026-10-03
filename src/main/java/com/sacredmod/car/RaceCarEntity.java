@@ -42,6 +42,9 @@ public class RaceCarEntity extends VehicleEntity {
 	private static final EntityDataAccessor<Integer> DATA_HANDLING = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> DATA_CHASSIS = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Float> DATA_STEERING = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> DATA_FUEL = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> DATA_THROTTLE = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
+	private static final float FUEL_CAPACITY = 100.0f;
 
 	private float speedBlocksPerTick;
 	private float steeringAngle;
@@ -60,6 +63,8 @@ public class RaceCarEntity extends VehicleEntity {
 		builder.define(DATA_HANDLING, 1);
 		builder.define(DATA_CHASSIS, 1);
 		builder.define(DATA_STEERING, 0.0f);
+		builder.define(DATA_FUEL, FUEL_CAPACITY);
+		builder.define(DATA_THROTTLE, 0.0f);
 	}
 
 	public CarBrand getBrand() {
@@ -106,6 +111,18 @@ public class RaceCarEntity extends VehicleEntity {
 
 	public float getSteeringAngle() {
 		return this.entityData.get(DATA_STEERING);
+	}
+
+	public int getFuelPercent() {
+		return Mth.ceil(this.entityData.get(DATA_FUEL));
+	}
+
+	public void setFuelPercent(int percent) {
+		this.entityData.set(DATA_FUEL, (float) Mth.clamp(percent, 0, 100));
+	}
+
+	public int getThrottlePercent() {
+		return Math.round(this.entityData.get(DATA_THROTTLE) * 100.0f);
 	}
 
 	public static int upgradeCost(int currentLevel) {
@@ -175,6 +192,7 @@ public class RaceCarEntity extends VehicleEntity {
 		output.putInt("WheelsLevel", getPartLevel(CarPart.WHEELS));
 		output.putInt("HandlingLevel", getPartLevel(CarPart.HANDLING));
 		output.putInt("ChassisLevel", getPartLevel(CarPart.CHASSIS));
+		output.putFloat("Fuel", this.entityData.get(DATA_FUEL));
 	}
 
 	@Override
@@ -186,6 +204,7 @@ public class RaceCarEntity extends VehicleEntity {
 		setPartLevel(CarPart.WHEELS, input.getInt("WheelsLevel").orElse(legacyLevel));
 		setPartLevel(CarPart.HANDLING, input.getInt("HandlingLevel").orElse(legacyLevel));
 		setPartLevel(CarPart.CHASSIS, input.getInt("ChassisLevel").orElse(legacyLevel));
+		this.entityData.set(DATA_FUEL, Mth.clamp(input.getFloatOr("Fuel", FUEL_CAPACITY), 0.0f, FUEL_CAPACITY));
 	}
 
 	@Override
@@ -218,6 +237,14 @@ public class RaceCarEntity extends VehicleEntity {
 		}
 		if (player.isSecondaryUseActive()) {
 			return InteractionResult.PASS;
+		}
+		if (held.is(Items.COAL) && getFuelPercent() < FUEL_CAPACITY) {
+			if (!this.level().isClientSide()) {
+				held.consume(1, player);
+				this.entityData.set(DATA_FUEL, Math.min(FUEL_CAPACITY, this.entityData.get(DATA_FUEL) + 25.0f));
+				RaceMessages.send(player, Component.literal("Refueled to " + getFuelPercent() + "%."), true);
+			}
+			return InteractionResult.SUCCESS;
 		}
 		if (!this.level().isClientSide() && player.startRiding(this)) {
 			return InteractionResult.SUCCESS;
@@ -271,6 +298,7 @@ public class RaceCarEntity extends VehicleEntity {
 			this.speedBlocksPerTick *= 0.88f;
 			this.steeringAngle = Mth.lerp(0.25f, this.steeringAngle, 0.0f);
 			this.entityData.set(DATA_STEERING, this.steeringAngle);
+			this.entityData.set(DATA_THROTTLE, 0.0f);
 			applyMotion();
 			return;
 		}
@@ -292,15 +320,21 @@ public class RaceCarEntity extends VehicleEntity {
 
 		float max = maxSpeedBlocksPerTick();
 		float accel = acceleration();
+		boolean accelerating = forward || backward;
+		this.entityData.set(DATA_THROTTLE, accelerating ? 1.0f : 0.0f);
+		boolean hasFuel = this.entityData.get(DATA_FUEL) > 0.0f;
 		float targetSteering = left ? 0.45f : right ? -0.45f : 0.0f;
 		this.steeringAngle = Mth.lerp(0.35f, this.steeringAngle, targetSteering);
 		this.entityData.set(DATA_STEERING, this.steeringAngle);
-		if (forward) {
+		if (forward && hasFuel) {
 			this.speedBlocksPerTick = Math.min(max, this.speedBlocksPerTick + accel);
-		} else if (backward) {
+		} else if (backward && hasFuel) {
 			this.speedBlocksPerTick = Math.max(-max * 0.4f, this.speedBlocksPerTick - accel * 0.7f);
 		} else {
 			this.speedBlocksPerTick *= 0.985f;
+		}
+		if (accelerating && hasFuel) {
+			this.entityData.set(DATA_FUEL, Math.max(0.0f, this.entityData.get(DATA_FUEL) - 0.02f));
 		}
 
 		if (Math.abs(this.speedBlocksPerTick) > 0.02f) {
