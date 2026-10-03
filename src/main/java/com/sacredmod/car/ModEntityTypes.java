@@ -8,6 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.core.Registry;
+import net.minecraft.world.phys.Vec3;
 
 public final class ModEntityTypes {
 	public static final ResourceKey<EntityType<?>> RACE_CAR_KEY = ResourceKey.create(Registries.ENTITY_TYPE, RaceMod.id("race_car"));
@@ -15,8 +16,9 @@ public final class ModEntityTypes {
 	public static final EntityType<RaceCarEntity> RACE_CAR = register(
 			RACE_CAR_KEY,
 			EntityType.Builder.<RaceCarEntity>of(RaceCarEntity::new, MobCategory.MISC)
-					.sized(1.5f, 0.85f)
-					.eyeHeight(0.55f)
+					.sized(1.8f, 1.25f)
+					.eyeHeight(0.75f)
+					.passengerAttachments(new Vec3(-0.2, 0.55, 0.12), new Vec3(0.2, 0.55, 0.12))
 					.clientTrackingRange(10)
 	);
 

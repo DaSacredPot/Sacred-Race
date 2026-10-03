@@ -4,6 +4,7 @@ import com.sacredmod.race.ModAttachments;
 import com.sacredmod.race.RaceStats;
 import com.sacredmod.util.RaceMessages;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -15,16 +16,18 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Entity.MovementEmission;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
@@ -38,8 +41,10 @@ public class RaceCarEntity extends VehicleEntity {
 	private static final EntityDataAccessor<Integer> DATA_WHEELS = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> DATA_HANDLING = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> DATA_CHASSIS = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Float> DATA_STEERING = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
 
 	private float speedBlocksPerTick;
+	private float steeringAngle;
 
 	public RaceCarEntity(EntityType<? extends RaceCarEntity> type, Level level) {
 		super(type, level);
@@ -54,6 +59,7 @@ public class RaceCarEntity extends VehicleEntity {
 		builder.define(DATA_WHEELS, 1);
 		builder.define(DATA_HANDLING, 1);
 		builder.define(DATA_CHASSIS, 1);
+		builder.define(DATA_STEERING, 0.0f);
 	}
 
 	public CarBrand getBrand() {
@@ -98,18 +104,22 @@ public class RaceCarEntity extends VehicleEntity {
 		}
 	}
 
+	public float getSteeringAngle() {
+		return this.entityData.get(DATA_STEERING);
+	}
+
 	public static int upgradeCost(int currentLevel) {
 		return currentLevel >= MAX_LEVEL ? 0 : Math.max(1, currentLevel) * 5;
 	}
 
 	public float maxSpeedBlocksPerTick() {
-		float base = 0.22f + (getPartLevel(CarPart.ENGINE) - 1) * 0.11f;
+		float base = 0.45f + (getPartLevel(CarPart.ENGINE) - 1) * 0.11f;
 		float wheelBonus = 1.0f + (getPartLevel(CarPart.WHEELS) - 1) * 0.025f;
 		return base * wheelBonus * getBrand().topSpeedMul();
 	}
 
 	public float acceleration() {
-		float engine = 0.018f + getPartLevel(CarPart.ENGINE) * 0.006f;
+		float engine = 0.055f + (getPartLevel(CarPart.ENGINE) - 1) * 0.012f;
 		float wheels = 1.0f + (getPartLevel(CarPart.WHEELS) - 1) * 0.015f;
 		return engine * wheels * getBrand().accelMul();
 	}
@@ -128,6 +138,26 @@ public class RaceCarEntity extends VehicleEntity {
 	@Override
 	protected Item getDropItem() {
 		return getBrand().dropItem();
+	}
+
+	@Override
+	protected MovementEmission getMovementEmission() {
+		return MovementEmission.NONE;
+	}
+
+	@Override
+	public void destroy(ServerLevel level, Item ignoredDropItem) {
+		if (isRemoved()) {
+			return;
+		}
+		ItemStack drop = getPickResult();
+		if (getCustomName() != null) {
+			drop.set(DataComponents.CUSTOM_NAME, getCustomName());
+		}
+		kill(level);
+		if (level.getGameRules().get(GameRules.ENTITY_DROPS)) {
+			spawnAtLocation(level, drop);
+		}
 	}
 
 	@Override
@@ -238,7 +268,9 @@ public class RaceCarEntity extends VehicleEntity {
 
 	private void tickDrive() {
 		if (!this.isVehicle()) {
-			this.speedBlocksPerTick *= 0.9f;
+			this.speedBlocksPerTick *= 0.88f;
+			this.steeringAngle = Mth.lerp(0.25f, this.steeringAngle, 0.0f);
+			this.entityData.set(DATA_STEERING, this.steeringAngle);
 			applyMotion();
 			return;
 		}
@@ -248,7 +280,6 @@ public class RaceCarEntity extends VehicleEntity {
 		boolean backward = false;
 		boolean left = false;
 		boolean right = false;
-		boolean brake = false;
 
 		if (controller instanceof ServerPlayer player) {
 			var input = player.getLastClientInput();
@@ -256,20 +287,20 @@ public class RaceCarEntity extends VehicleEntity {
 			backward = input.backward();
 			left = input.left();
 			right = input.right();
-			brake = input.shift();
 			this.setYRot(player.getYRot());
 		}
 
 		float max = maxSpeedBlocksPerTick();
 		float accel = acceleration();
-		if (brake) {
-			this.speedBlocksPerTick *= 0.82f;
-		} else if (forward) {
+		float targetSteering = left ? 0.45f : right ? -0.45f : 0.0f;
+		this.steeringAngle = Mth.lerp(0.35f, this.steeringAngle, targetSteering);
+		this.entityData.set(DATA_STEERING, this.steeringAngle);
+		if (forward) {
 			this.speedBlocksPerTick = Math.min(max, this.speedBlocksPerTick + accel);
 		} else if (backward) {
 			this.speedBlocksPerTick = Math.max(-max * 0.4f, this.speedBlocksPerTick - accel * 0.7f);
 		} else {
-			this.speedBlocksPerTick *= 0.96f;
+			this.speedBlocksPerTick *= 0.985f;
 		}
 
 		if (Math.abs(this.speedBlocksPerTick) > 0.02f) {
@@ -304,6 +335,11 @@ public class RaceCarEntity extends VehicleEntity {
 		this.move(MoverType.SELF, this.getDeltaMovement());
 		if (this.horizontalCollision) {
 			this.speedBlocksPerTick *= 0.35f + (getPartLevel(CarPart.CHASSIS) - 1) * 0.1f;
+		}
+		if (this.isVehicle() && Math.abs(this.speedBlocksPerTick) > 0.08f && this.tickCount % 8 == 0) {
+			float pitch = 0.65f + Math.min(0.5f, Math.abs(this.speedBlocksPerTick) / maxSpeedBlocksPerTick() * 0.45f);
+			this.level().playSound(null, this.blockPosition(), SoundEvents.MINECART_RIDING,
+					SoundSource.NEUTRAL, 0.35f, pitch);
 		}
 	}
 

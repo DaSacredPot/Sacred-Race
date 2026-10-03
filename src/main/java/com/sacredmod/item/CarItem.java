@@ -5,6 +5,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -97,8 +98,13 @@ public class CarItem extends Item {
 		}
 		car.setBrand(this.brand);
 		applyPartLevels(stack, car);
-		level.addFreshEntity(car);
+		if (!level.addFreshEntity(car)) {
+			return InteractionResult.FAIL;
+		}
 		stack.consume(1, player);
+		if (player instanceof ServerPlayer serverPlayer && !player.isSecondaryUseActive()) {
+			serverPlayer.startRiding(car);
+		}
 		return InteractionResult.SUCCESS;
 	}
 

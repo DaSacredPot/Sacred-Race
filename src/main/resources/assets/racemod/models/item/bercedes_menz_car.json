@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "racemod:item/bercedes_menz_car"
+  }
+}

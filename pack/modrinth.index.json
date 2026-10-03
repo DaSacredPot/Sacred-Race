@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
   "game": "minecraft",
-  "versionId": "1.0.0",
-  "name": "Race Mod Performance Pack",
-  "summary": "Fabric 26.3 race cars with Sodium graphics and gameplay optimizations.",
+  "versionId": "1.0.1",
+  "name": "Sacred Race Performance Pack",
+  "summary": "Drive detailed, textured race cars with cockpit interiors in Fabric 26.3.",
   "files": [
     {
       "path": "mods/fabric-api-0.161.0+26.3.jar",
