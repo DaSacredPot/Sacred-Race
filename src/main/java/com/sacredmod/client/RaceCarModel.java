@@ -9,6 +9,7 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public class RaceCarModel extends EntityModel<RaceCarRenderState> {
+	private final ModelPart chassis;
 	private final ModelPart frontLeftWheel;
 	private final ModelPart frontRightWheel;
 	private final ModelPart rearLeftWheel;
@@ -17,6 +18,7 @@ public class RaceCarModel extends EntityModel<RaceCarRenderState> {
 
 	public RaceCarModel(ModelPart root) {
 		super(root);
+		this.chassis = root;
 		this.frontLeftWheel = root.getChild("wheel_fl");
 		this.frontRightWheel = root.getChild("wheel_fr");
 		this.rearLeftWheel = root.getChild("wheel_bl");
@@ -148,6 +150,7 @@ public class RaceCarModel extends EntityModel<RaceCarRenderState> {
 		this.rearRightWheel.xRot = rotation;
 		this.frontLeftWheel.yRot = state.steering;
 		this.frontRightWheel.yRot = state.steering;
+		this.chassis.zRot = state.drift;
 		this.steeringWheel.zRot = -state.steering * 3;
 	}
 }

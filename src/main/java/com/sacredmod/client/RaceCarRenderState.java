@@ -8,4 +8,5 @@ public class RaceCarRenderState extends EntityRenderState {
 	public float yRot;
 	public float wheelRotation;
 	public float steering;
+	public float drift;
 }

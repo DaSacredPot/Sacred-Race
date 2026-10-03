@@ -36,6 +36,7 @@ public class RaceCarRenderer extends EntityRenderer<RaceCarEntity, RaceCarRender
 		state.yRot = entity.getYRot();
 		state.wheelRotation = (float) (entity.tickCount * entity.getDeltaMovement().horizontalDistance() * 3);
 		state.steering = entity.getSteeringAngle();
+		state.drift = entity.getDriftAngle();
 	}
 
 	@Override

@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
   "game": "minecraft",
-  "versionId": "1.0.6",
+  "versionId": "1.0.7",
   "name": "Sacred Race Performance Pack",
-  "summary": "Responsive car controls using both mod packets and vanilla vehicle input.",
+  "summary": "Car uses vanilla vehicle movement with custom car styling and drift effects.",
   "files": [
     {
       "path": "mods/fabric-api-0.161.0+26.3.jar",

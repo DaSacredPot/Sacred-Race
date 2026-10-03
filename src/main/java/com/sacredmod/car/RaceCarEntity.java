@@ -3,6 +3,7 @@ package com.sacredmod.car;
 import com.sacredmod.race.ModAttachments;
 import com.sacredmod.race.RaceStats;
 import com.sacredmod.network.RaceDriveInput;
+import com.sacredmod.item.ModItems;
 import com.sacredmod.util.RaceMessages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -14,17 +15,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.MovementEmission;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Input;
-import net.minecraft.world.entity.vehicle.VehicleEntity;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -34,8 +34,9 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import java.util.function.Supplier;
 
-public class RaceCarEntity extends VehicleEntity {
+public class RaceCarEntity extends Boat {
 	public static final int MAX_LEVEL = 5;
 
 	private static final EntityDataAccessor<Integer> DATA_BRAND = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
@@ -44,11 +45,11 @@ public class RaceCarEntity extends VehicleEntity {
 	private static final EntityDataAccessor<Integer> DATA_HANDLING = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> DATA_CHASSIS = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Float> DATA_STEERING = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> DATA_DRIFT = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> DATA_FUEL = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> DATA_THROTTLE = SynchedEntityData.defineId(RaceCarEntity.class, EntityDataSerializers.FLOAT);
 	private static final float FUEL_CAPACITY = 100.0f;
 
-	private float speedBlocksPerTick;
 	private float steeringAngle;
 	private boolean inputForward;
 	private boolean inputBackward;
@@ -57,7 +58,12 @@ public class RaceCarEntity extends VehicleEntity {
 	private int lastInputTick;
 
 	public RaceCarEntity(EntityType<? extends RaceCarEntity> type, Level level) {
-		super(type, level);
+		this(type, level, new CarDropItemSupplier());
+	}
+
+	private RaceCarEntity(EntityType<? extends RaceCarEntity> type, Level level, CarDropItemSupplier dropItemSupplier) {
+		super(type, level, dropItemSupplier);
+		dropItemSupplier.car = this;
 		this.blocksBuilding = true;
 	}
 
@@ -70,8 +76,18 @@ public class RaceCarEntity extends VehicleEntity {
 		builder.define(DATA_HANDLING, 1);
 		builder.define(DATA_CHASSIS, 1);
 		builder.define(DATA_STEERING, 0.0f);
+		builder.define(DATA_DRIFT, 0.0f);
 		builder.define(DATA_FUEL, FUEL_CAPACITY);
 		builder.define(DATA_THROTTLE, 0.0f);
+	}
+
+	private static final class CarDropItemSupplier implements Supplier<Item> {
+		private RaceCarEntity car;
+
+		@Override
+		public Item get() {
+			return this.car == null ? ModItems.VELDORA_CAR : this.car.getBrand().dropItem();
+		}
 	}
 
 	public CarBrand getBrand() {
@@ -120,6 +136,10 @@ public class RaceCarEntity extends VehicleEntity {
 		return this.entityData.get(DATA_STEERING);
 	}
 
+	public float getDriftAngle() {
+		return this.entityData.get(DATA_DRIFT);
+	}
+
 	public int getFuelPercent() {
 		return Mth.ceil(this.entityData.get(DATA_FUEL));
 	}
@@ -141,6 +161,7 @@ public class RaceCarEntity extends VehicleEntity {
 		this.inputLeft = input.left() && !input.right();
 		this.inputRight = input.right() && !input.left();
 		this.lastInputTick = this.tickCount;
+		setInput(this.inputRight, this.inputLeft, this.inputForward, this.inputBackward);
 	}
 
 	public static int upgradeCost(int currentLevel) {
@@ -171,11 +192,6 @@ public class RaceCarEntity extends VehicleEntity {
 	}
 
 	@Override
-	protected Item getDropItem() {
-		return getBrand().dropItem();
-	}
-
-	@Override
 	protected MovementEmission getMovementEmission() {
 		return MovementEmission.NONE;
 	}
@@ -185,7 +201,8 @@ public class RaceCarEntity extends VehicleEntity {
 		if (isRemoved()) {
 			return;
 		}
-		ItemStack drop = getPickResult();
+		ItemStack drop = new ItemStack(getBrand().dropItem());
+		CarItem.storePartLevels(drop, this);
 		if (getCustomName() != null) {
 			drop.set(DataComponents.CUSTOM_NAME, getCustomName());
 		}
@@ -193,13 +210,6 @@ public class RaceCarEntity extends VehicleEntity {
 		if (level.getGameRules().get(GameRules.ENTITY_DROPS)) {
 			spawnAtLocation(level, drop);
 		}
-	}
-
-	@Override
-	public ItemStack getPickResult() {
-		ItemStack stack = new ItemStack(getDropItem());
-		CarItem.storePartLevels(stack, this);
-		return stack;
 	}
 
 	@Override
@@ -306,89 +316,58 @@ public class RaceCarEntity extends VehicleEntity {
 	public void tick() {
 		super.tick();
 		if (this.level().isClientSide()) {
+			spawnDriftSmoke();
 			return;
 		}
-		tickDrive();
-	}
-
-	private void tickDrive() {
-		if (!this.isVehicle()) {
-			this.speedBlocksPerTick *= 0.88f;
-			this.steeringAngle = Mth.lerp(0.25f, this.steeringAngle, 0.0f);
-			this.entityData.set(DATA_STEERING, this.steeringAngle);
-			this.entityData.set(DATA_THROTTLE, 0.0f);
-			applyMotion();
-			return;
-		}
-
-		LivingEntity controller = this.getControllingPassenger();
 		boolean inputFresh = this.tickCount - this.lastInputTick <= 10;
-		Input vanillaInput = controller instanceof ServerPlayer serverPlayer
-				? serverPlayer.getLastClientInput()
-				: Input.EMPTY;
-		boolean forward = inputFresh ? this.inputForward : vanillaInput.forward();
-		boolean backward = inputFresh ? this.inputBackward : vanillaInput.backward();
-		boolean left = inputFresh ? this.inputLeft : vanillaInput.left();
-		boolean right = inputFresh ? this.inputRight : vanillaInput.right();
 		if (!inputFresh) {
 			this.inputForward = false;
 			this.inputBackward = false;
 			this.inputLeft = false;
 			this.inputRight = false;
+			setInput(false, false, false, false);
 		}
-
-		float max = maxSpeedBlocksPerTick();
-		float accel = acceleration();
 		boolean hasFuel = this.entityData.get(DATA_FUEL) > 0.0f;
-		float throttle = !hasFuel ? 0.0f : forward ? 1.0f : backward ? -1.0f : 0.0f;
+		boolean forward = inputFresh && this.inputForward && hasFuel;
+		boolean backward = inputFresh && this.inputBackward && hasFuel;
+		boolean left = inputFresh && this.inputLeft;
+		boolean right = inputFresh && this.inputRight;
+		if (!hasFuel && (this.inputForward || this.inputBackward)) {
+			setInput(right, left, false, false);
+		}
+		float throttle = forward ? 1.0f : backward ? -1.0f : 0.0f;
 		this.entityData.set(DATA_THROTTLE, throttle);
 		float targetSteering = left ? 0.45f : right ? -0.45f : 0.0f;
 		this.steeringAngle = Mth.lerp(0.35f, this.steeringAngle, targetSteering);
 		this.entityData.set(DATA_STEERING, this.steeringAngle);
-		if (forward && hasFuel) {
-			this.speedBlocksPerTick = Math.min(max, this.speedBlocksPerTick + accel);
-		} else if (backward && hasFuel) {
-			this.speedBlocksPerTick = Math.max(-max * 0.4f, this.speedBlocksPerTick - accel * 0.7f);
-		} else {
-			this.speedBlocksPerTick *= 0.985f;
-		}
+		float speedFactor = Mth.clamp(speedKmh() / 90.0f, 0.0f, 1.0f);
+		float drift = (left ? 1.0f : right ? -1.0f : 0.0f) * speedFactor * 0.32f;
+		this.entityData.set(DATA_DRIFT, Mth.lerp(0.2f, this.entityData.get(DATA_DRIFT), drift));
 		if (throttle != 0.0f) {
 			this.entityData.set(DATA_FUEL, Math.max(0.0f, this.entityData.get(DATA_FUEL) - 0.02f));
 		}
-
-		if (Math.abs(this.speedBlocksPerTick) > 0.02f) {
-			float turn = turnRate() * (this.speedBlocksPerTick >= 0 ? 1 : -1);
-			if (left) {
-				this.setYRot(this.getYRot() - turn);
-			}
-			if (right) {
-				this.setYRot(this.getYRot() + turn);
-			}
-		}
-
-		applyMotion();
-	}
-
-	private void applyMotion() {
-		float yawRad = this.getYRot() * Mth.DEG_TO_RAD;
-		double vx = -Mth.sin(yawRad) * this.speedBlocksPerTick;
-		double vz = Mth.cos(yawRad) * this.speedBlocksPerTick;
-		Vec3 motion = this.getDeltaMovement();
-		double vy = motion.y;
-		if (!this.onGround()) {
-			vy -= 0.08;
-		} else if (vy < 0) {
-			vy = 0;
-		}
-		this.setDeltaMovement(vx, vy, vz);
-		this.move(MoverType.SELF, this.getDeltaMovement());
-		if (this.horizontalCollision) {
-			this.speedBlocksPerTick *= 0.35f + (getPartLevel(CarPart.CHASSIS) - 1) * 0.1f;
-		}
-		if (this.isVehicle() && Math.abs(this.speedBlocksPerTick) > 0.08f && this.tickCount % 8 == 0) {
-			float pitch = 0.65f + Math.min(0.5f, Math.abs(this.speedBlocksPerTick) / maxSpeedBlocksPerTick() * 0.45f);
+		if (this.isVehicle() && speedKmh() > 5 && this.tickCount % 8 == 0) {
+			float pitch = 0.65f + Math.min(0.5f, speedKmh() / 160.0f);
 			this.level().playSound(null, this.blockPosition(), SoundEvents.MINECART_RIDING,
 					SoundSource.NEUTRAL, 0.35f, pitch);
+		}
+	}
+
+	private void spawnDriftSmoke() {
+		if (Math.abs(getDriftAngle()) < 0.08f || speedKmh() < 12 || this.tickCount % 2 != 0) {
+			return;
+		}
+		double yaw = this.getYRot() * Mth.DEG_TO_RAD;
+		double sideX = Math.cos(yaw) * 0.72;
+		double sideZ = Math.sin(yaw) * 0.72;
+		double rearX = Math.sin(yaw) * 0.9;
+		double rearZ = -Math.cos(yaw) * 0.9;
+		for (int side = -1; side <= 1; side += 2) {
+			this.level().addParticle(ParticleTypes.SMOKE,
+					this.getX() + rearX + sideX * side,
+					this.getY() + 0.15,
+					this.getZ() + rearZ + sideZ * side,
+					0.0, 0.015, 0.0);
 		}
 	}
 
