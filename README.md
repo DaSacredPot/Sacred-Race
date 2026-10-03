@@ -13,7 +13,7 @@ All performance mods in the pack have published Fabric builds for Minecraft 26.3
 
 ## Install the modpack
 
-Download `Race-Mod-Performance-Pack-1.0.7.mrpack` from [GitHub Releases](https://github.com/DaSacredPot/Sacred-Race/releases) and import it into the Modrinth App. To add only the cars to another compatible Fabric profile, download `racemod-1.0.7.jar` from the same release and install Fabric API in that profile. Both options target Minecraft 26.3, Fabric Loader 0.19.5, and Java 25 or newer. This version uses Minecraft's built-in boat vehicle movement and input under the custom race-car model, with steering-responsive drift lean and tire smoke. The boat model and boat UI are not used.
+Download `Race-Mod-Performance-Pack-1.0.8.mrpack` from [GitHub Releases](https://github.com/DaSacredPot/Sacred-Race/releases) and import it into the Modrinth App. To add only the cars to another compatible Fabric profile, download `racemod-1.0.8.jar` from the same release and install Fabric API in that profile. Both options target Minecraft 26.3, Fabric Loader 0.19.5, and Java 25 or newer. This version adds a genuinely translucent windshield with a visible frame so you can see through the glass.
 
 ## Play
 
@@ -29,7 +29,7 @@ Multiplayer requires the modpack on the server and each client. Each marque has 
 
 ## Build
 
-Run `.\gradlew.bat build modrinthPack` on Windows or `./gradlew build modrinthPack` on macOS/Linux. The mod JAR is written to `build/libs/`, and `Race-Mod-Performance-Pack-1.0.7.mrpack` is written to the project root.
+Run `.\gradlew.bat build modrinthPack` on Windows or `./gradlew build modrinthPack` on macOS/Linux. The mod JAR is written to `build/libs/`, and `Race-Mod-Performance-Pack-1.0.8.mrpack` is written to the project root.
 
 ## License
 

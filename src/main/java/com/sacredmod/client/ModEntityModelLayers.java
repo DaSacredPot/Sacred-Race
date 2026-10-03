@@ -6,11 +6,13 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 
 public final class ModEntityModelLayers {
 	public static final ModelLayerLocation RACE_CAR = new ModelLayerLocation(RaceMod.id("race_car"), "main");
+	public static final ModelLayerLocation RACE_CAR_WINDSHIELD = new ModelLayerLocation(RaceMod.id("race_car"), "windshield");
 
 	private ModEntityModelLayers() {
 	}
 
 	public static void register() {
 		ModelLayerRegistry.registerModelLayer(RACE_CAR, RaceCarModel::createBodyLayer);
+		ModelLayerRegistry.registerModelLayer(RACE_CAR_WINDSHIELD, RaceCarModel::createWindshieldLayer);
 	}
 }

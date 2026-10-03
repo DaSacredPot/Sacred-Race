@@ -23,6 +23,18 @@ function Fill-Rect($Graphics, [string]$Color, [int]$X, [int]$Y, [int]$Width, [in
 	try { $Graphics.FillRectangle($brush, $X, $Y, $Width, $Height) } finally { $brush.Dispose() }
 }
 
+function Fill-Glass($Graphics, [int]$X, [int]$Y, [int]$Width, [int]$Height) {
+	$brush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(48, 104, 216, 239))
+	$compositingMode = $Graphics.CompositingMode
+	try {
+		$Graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+		$Graphics.FillRectangle($brush, $X, $Y, $Width, $Height)
+	} finally {
+		$Graphics.CompositingMode = $compositingMode
+		$brush.Dispose()
+	}
+}
+
 function Draw-Atlas($Brand, [string]$Path) {
 	$bitmap = New-Object System.Drawing.Bitmap 256, 256, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 	$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
@@ -59,6 +71,7 @@ function Draw-Atlas($Brand, [string]$Path) {
 		Fill-Rect $graphics "#B7F2EC" 138 8 18 2
 		Fill-Rect $graphics "#4BA6B9" 159 8 82 2
 		Fill-Rect $graphics "#102633" 130 39 124 5
+		Fill-Glass $graphics 128 0 16 5
 
 		Fill-Rect $graphics "#171B20" 128 64 32 32
 		for ($i = 0; $i -lt 32; $i += 6) {
