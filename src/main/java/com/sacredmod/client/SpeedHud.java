@@ -95,6 +95,9 @@ public final class SpeedHud {
 		draw(graphics, gaugeX - Minecraft.getInstance().font.width("KM/H") / 2,
 				height - 43, "KM/H", 0xFF9DB0BA);
 
+		draw(graphics, centerX - 145, height - 12, "A  \u2190 LEFT", 0xFFE0E7E9);
+		draw(graphics, centerX + 79, height - 12, "RIGHT \u2192  D", 0xFFE0E7E9);
+
 		int throttle = car.getThrottlePercent();
 		draw(graphics, centerX - 12, panelTop + 24, "THROTTLE " + (throttle > 0 ? "+" : "") + throttle + "%",
 				0xFFB9C9CE);

@@ -135,7 +135,7 @@ public final class RaceDimension {
 
 	private static void buildArena(ServerLevel level) {
 		BlockPos marker = new BlockPos(0, GROUND_Y - 2, 0);
-		if (level.getBlockState(marker).is(net.minecraft.world.level.block.Blocks.BLUE_ICE)) {
+		if (level.getBlockState(marker).is(net.minecraft.world.level.block.Blocks.PACKED_ICE)) {
 			return;
 		}
 		RaceArena.build(level, marker);

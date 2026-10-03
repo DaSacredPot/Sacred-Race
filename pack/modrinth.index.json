@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
   "game": "minecraft",
-  "versionId": "1.1.0",
+  "versionId": "1.1.1",
   "name": "Sacred Race Performance Pack",
-  "summary": "Clear first-person driving view with blue-ice track and open-top cars.",
+  "summary": "Full-course safety fences and clear A/D steering hints for the blue-ice speedway.",
   "files": [
     {
       "path": "mods/fabric-api-0.161.0+26.3.jar",

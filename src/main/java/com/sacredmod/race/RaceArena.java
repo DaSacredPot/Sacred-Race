@@ -33,7 +33,10 @@ final class RaceArena {
 	}
 
 	static void build(ServerLevel level, BlockPos marker) {
-		boolean existingArena = level.getBlockState(marker).is(Blocks.OBSIDIAN);
+		BlockState previousMarker = level.getBlockState(marker);
+		boolean existingArena = previousMarker.is(Blocks.OBSIDIAN)
+				|| previousMarker.is(Blocks.BLUE_ICE)
+				|| previousMarker.is(Blocks.PACKED_ICE);
 		int roadY = RaceDimension.GROUND_Y - 1;
 		for (int x = -OUTER_X; x <= OUTER_X; x++) {
 			for (int z = -OUTER_Z; z <= OUTER_Z; z++) {
@@ -45,28 +48,28 @@ final class RaceArena {
 			}
 		}
 
-		buildCornerFences(level, roadY);
+		buildSafetyFences(level, roadY);
 		buildGate(level, 0, -55, true);
 		buildGate(level, 0, 55, false);
 		if (!existingArena) {
 			buildGrandstands(level);
 		}
 		buildLights(level);
-		level.setBlock(marker, Blocks.BLUE_ICE.defaultBlockState(), Block.UPDATE_CLIENTS);
+		level.setBlock(marker, Blocks.PACKED_ICE.defaultBlockState(), Block.UPDATE_CLIENTS);
 	}
 
-	private static void buildCornerFences(ServerLevel level, int roadY) {
-		buildFenceArc(level, roadY, 20, 160);
-		buildFenceArc(level, roadY, 200, 340);
+	private static void buildSafetyFences(ServerLevel level, int roadY) {
+		buildFenceLoop(level, roadY, OUTER_X + 2, OUTER_Z + 2);
+		buildFenceLoop(level, roadY, INNER_X - 2, INNER_Z - 2);
 	}
 
-	private static void buildFenceArc(ServerLevel level, int roadY, int startDegrees, int endDegrees) {
+	private static void buildFenceLoop(ServerLevel level, int roadY, int radiusX, int radiusZ) {
 		int previousX = Integer.MIN_VALUE;
 		int previousZ = Integer.MIN_VALUE;
-		for (int degrees = startDegrees; degrees <= endDegrees; degrees++) {
+		for (int degrees = 0; degrees <= 360; degrees++) {
 			double angle = Math.toRadians(degrees);
-			int x = (int) Math.round((OUTER_X + 2) * Math.cos(angle));
-			int z = (int) Math.round((OUTER_Z + 2) * Math.sin(angle));
+			int x = (int) Math.round(radiusX * Math.cos(angle));
+			int z = (int) Math.round(radiusZ * Math.sin(angle));
 			if (previousX != Integer.MIN_VALUE) {
 				int steps = Math.max(Math.abs(x - previousX), Math.abs(z - previousZ));
 				for (int step = 1; step <= steps; step++) {
