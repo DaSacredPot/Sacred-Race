@@ -23,6 +23,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -322,10 +323,13 @@ public class RaceCarEntity extends VehicleEntity {
 
 		LivingEntity controller = this.getControllingPassenger();
 		boolean inputFresh = this.tickCount - this.lastInputTick <= 10;
-		boolean forward = inputFresh && this.inputForward;
-		boolean backward = inputFresh && this.inputBackward;
-		boolean left = inputFresh && this.inputLeft;
-		boolean right = inputFresh && this.inputRight;
+		Input vanillaInput = controller instanceof ServerPlayer serverPlayer
+				? serverPlayer.getLastClientInput()
+				: Input.EMPTY;
+		boolean forward = inputFresh ? this.inputForward : vanillaInput.forward();
+		boolean backward = inputFresh ? this.inputBackward : vanillaInput.backward();
+		boolean left = inputFresh ? this.inputLeft : vanillaInput.left();
+		boolean right = inputFresh ? this.inputRight : vanillaInput.right();
 		if (!inputFresh) {
 			this.inputForward = false;
 			this.inputBackward = false;

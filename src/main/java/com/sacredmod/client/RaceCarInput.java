@@ -16,8 +16,7 @@ public final class RaceCarInput {
 
 	private static void sendInput(Minecraft minecraft) {
 		if (minecraft.player == null || minecraft.level == null
-				|| !(minecraft.player.getVehicle() instanceof RaceCarEntity)
-				|| !ClientPlayNetworking.canSend(RaceDriveInput.TYPE)) {
+				|| !(minecraft.player.getVehicle() instanceof RaceCarEntity)) {
 			return;
 		}
 		ClientPlayNetworking.send(new RaceDriveInput(
